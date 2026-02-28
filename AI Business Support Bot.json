@@ -1,406 +1,368 @@
-{
-  "name": "AI Business Support Bot",
-  "nodes": [
-    {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "support-bot",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2.1,
-      "position": [
-        -112,
-        0
-      ],
-      "id": "444a2ea2-5f08-44c6-af9d-ec3c9d1e1434",
-      "name": "Webhook",
-      "webhookId": "e42660c8-454e-44c1-ac31-410701ea294d",
-      "retryOnFail": false
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "e7e9292a-060e-4223-895a-5e9c5bdd91a5",
-              "name": "customerName",
-              "value": "={{ $json.body.data.fields[0].value }}",
-              "type": "string"
-            },
-            {
-              "id": "f6bbdb70-f1f0-4471-8808-688a40b179b7",
-              "name": "customerEmail",
-              "value": "={{ $json.body.data.fields[1].value }}",
-              "type": "string"
-            },
-            {
-              "id": "1832bc79-eabd-4f05-ae59-53cb2ef273d8",
-              "name": "customerQuery",
-              "value": "={{ $json.body.data.fields[2].value }}",
-              "type": "string"
-            },
-            {
-              "id": "a8426d1a-4f83-4a32-9acc-20c987f6a470",
-              "name": "store",
-              "value": "={{ $json.body.data.fields[3].value }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        96,
-        0
-      ],
-      "id": "7982cdfd-9cd8-4ca6-8614-21b42ba83992",
-      "name": "Edit Fields"
-    },
-    {
-      "parameters": {
-        "promptType": "define",
-        "text": "=You are a customer support agent for \"{{ $('Get row(s) in sheet').item.json.business_name }}\".\n\nBusiness Profile:\n- Industry: {{ $('Get row(s) in sheet').item.json.industry }}\n- Working Hours: {{ $('Get row(s) in sheet').item.json.hours }}\n- Products/Services: {{ $('Get row(s) in sheet').item.json.products }}\n- Refund Policy: {{ $('Get row(s) in sheet').item.json.refund_policy }}\n- Communication Tone: {{ $('Get row(s) in sheet').item.json.tone }}\n\nLANGUAGE INSTRUCTION — CRITICAL:\n1. Detect the language of the customer query automatically.\n2. Reply ONLY in that same detected language.\n3. Supported languages: Hindi, Marathi, Tamil, Telugu, English.\n4. Never mix languages in your reply.\n5. If language is unclear, default to English.\n\nRESPONSE RULES:\n1. Reply strictly within the business profile information provided above.\n2. Do NOT invent or assume any information not listed above.\n3. If the query is outside your knowledge, politely say:\n   \"For more details, please contact us directly during business hours.\"\n4. Keep reply under 150 words.\n5. Always address the customer by their name.\n6. Match the tone defined in the business profile strictly.\n\nCustomer Name: {{ $('Edit Fields').item.json.customerName }}\nCustomer Query: {{ $('Edit Fields').item.json.customerQuery }}",
-        "messages": {
-          "messageValues": [
-            {
-              "message": "="
-            }
-          ]
-        },
-        "batching": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.chainLlm",
-      "typeVersion": 1.9,
-      "position": [
-        448,
-        0
-      ],
-      "id": "d08e1e33-6e80-477a-acdd-73dfe4c58850",
-      "name": "Basic LLM Chain"
-    },
-    {
-      "parameters": {
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
-      "typeVersion": 1,
-      "position": [
-        544,
-        192
-      ],
-      "id": "40acf61a-e94c-423a-bdf4-fa29ec4417c0",
-      "name": "Google Gemini Chat Model",
-      "credentials": {
-        "googlePalmApi": {
-          "id": "SCImPnvqvcB61qaF",
-          "name": "Google Gemini(PaLM) Api account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "6e822f88-a77b-4422-92f7-bfa51555e75f",
-              "leftValue": "={{ $('Edit Fields').item.json.customerQuery.toLowerCase() }}",
-              "rightValue": "refund",
-              "operator": {
-                "type": "string",
-                "operation": "contains"
-              }
-            },
-            {
-              "id": "cd0e1992-3627-4e5e-8fd6-864a415ce8eb",
-              "leftValue": "={{ $('Edit Fields').item.json.customerQuery.toLowerCase() }}",
-              "rightValue": "complaint",
-              "operator": {
-                "type": "string",
-                "operation": "contains"
-              }
-            },
-            {
-              "id": "1e3e8241-696b-47c6-aeaf-418b58766fee",
-              "leftValue": "={{ $('Edit Fields').item.json.customerQuery.toLowerCase() }}",
-              "rightValue": "legal",
-              "operator": {
-                "type": "string",
-                "operation": "contains"
-              }
-            }
-          ],
-          "combinator": "or"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        800,
-        0
-      ],
-      "id": "af80552e-e507-4409-865a-9116b84a6eb8",
-      "name": "If"
-    },
-    {
-      "parameters": {
-        "sendTo": "={{ $('Edit Fields').item.json.customerEmail }}",
-        "subject": "=Re: Your Query - {{ $('Get row(s) in sheet').item.json.business_name }}",
-        "message": "=<p>Hi {{ $('Edit Fields').item.json.customerName }},</p>\n<p>{{ $('Basic LLM Chain').item.json.text }}</p>\n<br/>\n<p>Warm regards,</p>\n<p><strong>{{ $('Get row(s) in sheet').item.json.business_name }} Support Team</strong></p>",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.gmail",
-      "typeVersion": 2.2,
-      "position": [
-        1008,
-        96
-      ],
-      "id": "a7d01b4a-6fbb-400a-af2e-1982d2c3ce42",
-      "name": "Send a message",
-      "webhookId": "d1cc080f-d8d3-409b-a8fd-770dca696227",
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "GsO5tjAqMxIOZhYU",
-          "name": "Gmail account 2"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "append",
-        "documentId": {
-          "__rl": true,
-          "value": "1qphimYg9wy6E0hcQZMQ2q7W80OjigXLXtp-d-14IwMk",
-          "mode": "id"
-        },
-        "sheetName": {
-          "__rl": true,
-          "mode": "name",
-          "value": "Test"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "Timestamp": "={{ new Date().toISOString() }}",
-            "Customer Name": "={{ $('Edit Fields').item.json.customerName }}",
-            "Customer Email": "={{ $('Edit Fields').item.json.customerEmail }}",
-            "Query": "={{ $('Edit Fields').item.json.customerQuery }}",
-            "AI Reply": "={{ $('Basic LLM Chain').item.json.text }}"
-          },
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "Timestamp",
-              "displayName": "Timestamp",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "Customer Name",
-              "displayName": "Customer Name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "Customer Email",
-              "displayName": "Customer Email",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "Query",
-              "displayName": "Query",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            },
-            {
-              "id": "AI Reply",
-              "displayName": "AI Reply",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true,
-              "removed": false
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.7,
-      "position": [
-        1216,
-        96
-      ],
-      "id": "742be8ee-4b69-46a1-9239-875701c5aee4",
-      "name": "Append row in sheet",
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "Qb5ieMNmZcMZzuna",
-          "name": "Google Sheets account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "documentId": {
-          "__rl": true,
-          "value": "14cZz-182L6dezgGpV9lRNSfztkVjitVHAJjiJjUgThg",
-          "mode": "id"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "Sheet1",
-          "mode": "name"
-        },
-        "filtersUI": {
-          "values": [
-            {
-              "lookupColumn": "business_id",
-              "lookupValue": "={{ $('Edit Fields').item.json.store }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.7,
-      "position": [
-        288,
-        0
-      ],
-      "id": "f8f1f0ef-f5e1-4c57-93f4-be8b7bf7fa3d",
-      "name": "Get row(s) in sheet",
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "Qb5ieMNmZcMZzuna",
-          "name": "Google Sheets account"
-        }
-      }
-    }
-  ],
-  "pinData": {},
-  "connections": {
-    "Webhook": {
-      "main": [
-        [
-          {
-            "node": "Edit Fields",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Google Gemini Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Basic LLM Chain",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Basic LLM Chain": {
-      "main": [
-        [
-          {
-            "node": "If",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Edit Fields": {
-      "main": [
-        [
-          {
-            "node": "Get row(s) in sheet",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "If": {
-      "main": [
-        [],
-        [
-          {
-            "node": "Send a message",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Send a message": {
-      "main": [
-        [
-          {
-            "node": "Append row in sheet",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get row(s) in sheet": {
-      "main": [
-        [
-          {
-            "node": "Basic LLM Chain",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    }
-  },
-  "active": true,
-  "settings": {
-    "executionOrder": "v1",
-    "binaryMode": "separate",
-    "availableInMCP": false,
-    "timeSavedMode": "fixed",
-    "callerPolicy": "workflowsFromSameOwner"
-  },
-  "versionId": "6d865699-4b4d-44b5-9dd7-6293c39428d4",
-  "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "8926cb912ce5d4b3264cad5f03efeacda9069209ac862c1c78a65fe738df9ced"
-  },
-  "id": "I7XvLs1NmKMuUKbA",
-  "tags": []
-}
+	
+name	"AI Business Support Bot"
+nodes	
+0	
+parameters	
+httpMethod	"POST"
+path	"support-bot"
+options	{}
+type	"n8n-nodes-base.webhook"
+typeVersion	2.1
+position	
+0	-112
+1	0
+id	"444a2ea2-5f08-44c6-af9d-ec3c9d1e1434"
+name	"Webhook"
+webhookId	"e42660c8-454e-44c1-ac31-410701ea294d"
+retryOnFail	false
+1	
+parameters	
+assignments	
+assignments	
+0	
+id	"e7e9292a-060e-4223-895a-5e9c5bdd91a5"
+name	"customerName"
+value	"={{ $json.body.data.fields[0].value }}"
+type	"string"
+1	
+id	"f6bbdb70-f1f0-4471-8808-688a40b179b7"
+name	"customerEmail"
+value	"={{ $json.body.data.fields[1].value }}"
+type	"string"
+2	
+id	"1832bc79-eabd-4f05-ae59-53cb2ef273d8"
+name	"customerQuery"
+value	"={{ $json.body.data.fields[2].value }}"
+type	"string"
+3	
+id	"a8426d1a-4f83-4a32-9acc-20c987f6a470"
+name	"store"
+value	"={{ $json.body.data.fields[3].value }}"
+type	"string"
+4	
+id	"f452edf8-9155-4b4f-937a-3a8b71cee116"
+name	"phone"
+value	"={{ $json.body.data.fields[4].value }}"
+type	"string"
+includeOtherFields	"={{ false }}"
+options	{}
+type	"n8n-nodes-base.set"
+typeVersion	3.4
+position	
+0	96
+1	0
+id	"7982cdfd-9cd8-4ca6-8614-21b42ba83992"
+name	"Edit Fields"
+2	
+parameters	
+promptType	"define"
+text	`=You are a customer support agent for "{{ $('Get row(s) in sheet').item.json.business_name }}".\n\nBusiness Profile:\n- Industry: {{ $('Get row(s) in sheet').item.json.industry }}\n- Working Hours: {{ $('Get row(s) in sheet').item.json.hours }}\n- Products/Services: {{ $('Get row(s) in sheet').item.json.products }}\n- Refund Policy: {{ $('Get row(s) in sheet').item.json.refund_policy }}\n- Communication Tone: {{ $('Get row(s) in sheet').item.json.tone }}\n\nCUSTOMER SENTIMENT: {{ $('Sentiment Detector').item.json.text }}\n\nSENTIMENT RESPONSE RULES — FOLLOW STRICTLY:\n- If ANGRY → Start with a sincere apology. Use calm, empathetic language. \n  Prioritize resolving their frustration before answering.\n- If FRUSTRATED → Acknowledge their patience. Be extra helpful and clear.\n- If HAPPY → Match their positive energy. Be warm and enthusiastic.\n- If CONFUSED → Use very simple language. Break answer into short clear points.\n- If NEUTRAL → Follow the business tone normally.\n\nLANGUAGE INSTRUCTION:\n1. Detect the language of the customer query automatically.\n2. Reply ONLY in that same detected language.\n3. Supported: Hindi, Marathi, Tamil, Telugu, English.\n4. Never mix languages.\n5. Default to English if unclear.\n\nRESPONSE RULES:\n1. Reply strictly within the business profile above.\n2. Do NOT invent information not listed.\n3. If query is outside your knowledge say:\n   "For more details, please contact us during business hours."\n4. Keep reply under 150 words.\n5. Always address customer by name.\n6. Match business tone AND sentiment tone together.\n\nCustomer Name: {{ $('Edit Fields').item.json.customerName }}\nCustomer Query: {{ $('Edit Fields').item.json.customerQuery }}`
+messages	
+messageValues	
+0	
+message	"="
+batching	{}
+type	"@n8n/n8n-nodes-langchain.chainLlm"
+typeVersion	1.9
+position	
+0	816
+1	0
+id	"d08e1e33-6e80-477a-acdd-73dfe4c58850"
+name	"Basic LLM Chain"
+3	
+parameters	
+options	{}
+type	"@n8n/n8n-nodes-langchain.lmChatGoogleGemini"
+typeVersion	1
+position	
+0	704
+1	224
+id	"40acf61a-e94c-423a-bdf4-fa29ec4417c0"
+name	"Google Gemini Chat Model"
+credentials	
+googlePalmApi	
+id	"SCImPnvqvcB61qaF"
+name	"Google Gemini(PaLM) Api account"
+4	
+parameters	
+conditions	
+options	
+caseSensitive	true
+leftValue	""
+typeValidation	"strict"
+version	3
+conditions	
+0	
+id	"6e822f88-a77b-4422-92f7-bfa51555e75f"
+leftValue	"={{ $('Edit Fields').item.json.customerQuery.toLowerCase() }}"
+rightValue	"refund"
+operator	
+type	"string"
+operation	"contains"
+1	
+id	"cd0e1992-3627-4e5e-8fd6-864a415ce8eb"
+leftValue	"={{ $('Edit Fields').item.json.customerQuery.toLowerCase() }}"
+rightValue	"complaint"
+operator	
+type	"string"
+operation	"contains"
+2	
+id	"1e3e8241-696b-47c6-aeaf-418b58766fee"
+leftValue	"={{ $('Edit Fields').item.json.customerQuery.toLowerCase() }}"
+rightValue	"legal"
+operator	
+type	"string"
+operation	"contains"
+combinator	"or"
+options	{}
+type	"n8n-nodes-base.if"
+typeVersion	2.3
+position	
+0	1168
+1	0
+id	"af80552e-e507-4409-865a-9116b84a6eb8"
+name	"If"
+5	
+parameters	
+sendTo	"={{ $('Edit Fields').item.json.customerEmail }}"
+subject	"=Re: Your Query - {{ $('Get row(s) in sheet').item.json.business_name }}"
+message	"=<p>Hi {{ $('Edit Fields').item.json.customerName }},</p>\n<p>{{ $('Basic LLM Chain').item.json.text }}</p>\n<br/>\n<p>Warm regards,</p>\n<p><strong>{{ $('Get row(s) in sheet').item.json.business_name }} Support Team</strong></p>"
+options	{}
+type	"n8n-nodes-base.gmail"
+typeVersion	2.2
+position	
+0	1440
+1	96
+id	"a7d01b4a-6fbb-400a-af2e-1982d2c3ce42"
+name	"Send a message"
+webhookId	"d1cc080f-d8d3-409b-a8fd-770dca696227"
+credentials	
+gmailOAuth2	
+id	"GsO5tjAqMxIOZhYU"
+name	"Gmail account 2"
+6	
+parameters	
+operation	"append"
+documentId	
+__rl	true
+value	"1qphimYg9wy6E0hcQZMQ2q7W80OjigXLXtp-d-14IwMk"
+mode	"id"
+sheetName	
+__rl	true
+mode	"name"
+value	"Test"
+columns	
+mappingMode	"defineBelow"
+value	
+Timestamp	"={{ new Date().toISOString() }}"
+Customer Name	"={{ $('Edit Fields').item.json.customerName }}"
+Customer Email	"={{ $('Edit Fields').item.json.customerEmail }}"
+Query	"={{ $('Edit Fields').item.json.customerQuery }}"
+AI Reply	"={{ $('Basic LLM Chain').item.json.text }}"
+Sentiment Logging	"={{ $('Sentiment Detector').item.json.text }}"
+matchingColumns	[]
+schema	
+0	
+id	"Timestamp"
+displayName	"Timestamp"
+required	false
+defaultMatch	false
+display	true
+type	"string"
+canBeUsedToMatch	true
+removed	false
+1	
+id	"Customer Name"
+displayName	"Customer Name"
+required	false
+defaultMatch	false
+display	true
+type	"string"
+canBeUsedToMatch	true
+removed	false
+2	
+id	"Customer Email"
+displayName	"Customer Email"
+required	false
+defaultMatch	false
+display	true
+type	"string"
+canBeUsedToMatch	true
+removed	false
+3	
+id	"Query"
+displayName	"Query"
+required	false
+defaultMatch	false
+display	true
+type	"string"
+canBeUsedToMatch	true
+removed	false
+4	
+id	"AI Reply"
+displayName	"AI Reply"
+required	false
+defaultMatch	false
+display	true
+type	"string"
+canBeUsedToMatch	true
+removed	false
+5	
+id	"Sentiment Logging"
+displayName	"Sentiment Logging"
+required	false
+defaultMatch	false
+display	true
+type	"string"
+canBeUsedToMatch	true
+removed	false
+attemptToConvertTypes	false
+convertFieldsToString	false
+options	{}
+type	"n8n-nodes-base.googleSheets"
+typeVersion	4.7
+position	
+0	1680
+1	96
+id	"742be8ee-4b69-46a1-9239-875701c5aee4"
+name	"Append row in sheet"
+credentials	
+googleSheetsOAuth2Api	
+id	"Qb5ieMNmZcMZzuna"
+name	"Google Sheets account"
+7	
+parameters	
+documentId	
+__rl	true
+value	"14cZz-182L6dezgGpV9lRNSfztkVjitVHAJjiJjUgThg"
+mode	"id"
+sheetName	
+__rl	true
+value	"Sheet1"
+mode	"name"
+filtersUI	
+values	
+0	
+lookupColumn	"business_id"
+lookupValue	"={{ $('Edit Fields').item.json.store }}"
+options	{}
+type	"n8n-nodes-base.googleSheets"
+typeVersion	4.7
+position	
+0	288
+1	0
+id	"f8f1f0ef-f5e1-4c57-93f4-be8b7bf7fa3d"
+name	"Get row(s) in sheet"
+credentials	
+googleSheetsOAuth2Api	
+id	"Qb5ieMNmZcMZzuna"
+name	"Google Sheets account"
+8	
+parameters	
+from	"+14477588082"
+to	"={{ $('Edit Fields').item.json.phone }}"
+message	"=Hi {{ $('Edit Fields').item.json.customerName }},\n{{ $('Basic LLM Chain').item.json.text }}\n\nWarm regards,\n{{ $('Get row(s) in sheet').item.json.business_name }} Support Team"
+options	{}
+type	"n8n-nodes-base.twilio"
+typeVersion	1
+position	
+0	1440
+1	304
+id	"74602292-cfa3-4288-acfb-0662db1d221d"
+name	"Send an SMS/MMS/WhatsApp message"
+credentials	
+twilioApi	
+id	"XJNUf5ITQDFKUbNh"
+name	"Twilio account"
+9	
+parameters	
+promptType	"define"
+text	"=You are a sentiment analysis engine.\n\nAnalyze the emotional tone of the following customer message and reply with ONLY one word from these exact options:\n\nANGRY\nFRUSTRATED  \nHAPPY\nCONFUSED\nNEUTRAL\n\nRules:\n- Reply with ONE WORD only\n- No punctuation, no explanation, no extra text\n- Choose the closest match\n\nCustomer Message: {{ $('Edit Fields').item.json.customerQuery }}"
+batching	{}
+type	"@n8n/n8n-nodes-langchain.chainLlm"
+typeVersion	1.9
+position	
+0	496
+1	0
+id	"6692810f-4d5f-4db6-ad29-a5cce038dc77"
+name	"Sentiment Detector"
+pinData	{}
+connections	
+Webhook	
+main	
+0	
+0	
+node	"Edit Fields"
+type	"main"
+index	0
+Google Gemini Chat Model	
+ai_languageModel	
+0	
+0	
+node	"Basic LLM Chain"
+type	"ai_languageModel"
+index	0
+1	
+node	"Sentiment Detector"
+type	"ai_languageModel"
+index	0
+Basic LLM Chain	
+main	
+0	
+0	
+node	"If"
+type	"main"
+index	0
+Edit Fields	
+main	
+0	
+0	
+node	"Get row(s) in sheet"
+type	"main"
+index	0
+If	
+main	
+0	[]
+1	
+0	
+node	"Send a message"
+type	"main"
+index	0
+1	
+node	"Send an SMS/MMS/WhatsApp message"
+type	"main"
+index	0
+Send a message	
+main	
+0	
+0	
+node	"Append row in sheet"
+type	"main"
+index	0
+Get row(s) in sheet	
+main	
+0	
+0	
+node	"Sentiment Detector"
+type	"main"
+index	0
+Sentiment Detector	
+main	
+0	
+0	
+node	"Basic LLM Chain"
+type	"main"
+index	0
+active	true
+settings	
+executionOrder	"v1"
+binaryMode	"separate"
+availableInMCP	false
+timeSavedMode	"fixed"
+callerPolicy	"workflowsFromSameOwner"
+versionId	"1d8b62cf-c3a6-4363-aa19-0ad88031ad52"
+meta	
+templateCredsSetupCompleted	true
+instanceId	"8926cb912ce5d4b3264cad5f03efeacda9069209ac862c1c78a65fe738df9ced"
+id	"I7XvLs1NmKMuUKbA"
+tags	[]
