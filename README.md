@@ -1,4 +1,4 @@
-# 🤖 AI Business Support Bot — TriggerX
+# 🤖 AI Business Support Bot — NodeMinds
 
 > An intelligent, always-on AI automation pipeline that obliterates response delays, engages every customer instantly, and scales support operations to infinity — at zero additional cost.
 
