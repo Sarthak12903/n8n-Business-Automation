@@ -13,7 +13,7 @@
 | *Sarthak Bhalerao* |
 | *Alina Pathan* |
 
-> **Team Name:** TriggerX
+> **Team Name:** NodeMinds
 > **Hackathon:** Pandora Hackathon 2026
 > **Theme:** AI + n8n Automation
 
@@ -27,7 +27,7 @@ To address the critical gap in real-time customer engagement for small and mediu
 
 ## 💡 Solution Approach
 
-TriggerX is a **multi-tenant AI customer support platform** where any small business registers their profile once — and instantly gets a 24/7 AI-powered support bot with zero coding required.
+This is a **multi-tenant AI customer support platform** where any small business registers their profile once — and instantly gets a 24/7 AI-powered support bot with zero coding required.
 
 When a customer submits a query:
 
@@ -39,24 +39,7 @@ When a customer submits a query:
 6. **Gmail** delivers the AI reply to the customer within 15 seconds
 7. **Google Sheets Logger** records every interaction with full audit trail
 
-```
-Customer Query (Tally Form)
-        ↓
-Webhook → Edit Fields → Business Registry Lookup
-                                ↓
-                      Sentiment Detector (Gemini #1)
-                                ↓
-                      AI Reply Generator (Gemini #2)
-                                ↓
-                           IF Node
-                        ↙          ↘
-                   ANGRY/          NORMAL
-                  COMPLAINT        QUERY
-                      ↓               ↓
-               Escalate to      Gmail Reply
-               Human Agent    + Sheets Logger
-```
-
+<img width="1403" height="786" alt="Arch" src="https://github.com/user-attachments/assets/84b5ba72-e5cf-452f-9d53-34e3d274a4fc" />
 ---
 
 ## 🛠️ Tech Stack
@@ -224,27 +207,17 @@ ai-support-bot/
 ├── workflow.json          # n8n workflow export (import this into n8n)
 ├── Business_Registry.xlsx # Business metadata store
 ├── README.md              # This file
-└── docs/
-    └── AI_Support_Bot_Documentation.docx  # Full build documentation
+
 ```
 
 ---
 
 ## 📸 Workflow Screenshot
 
-> *(Add your n8n canvas screenshot here)*
+<img width="1679" height="591" alt="image" src="https://github.com/user-attachments/assets/a3eb7a16-2c03-45ef-9f17-fcc8615760b7" />
 
-```
-Webhook → Edit Fields → Get row(s) in sheet → Sentiment Detector → Basic LLM Chain → IF
-                                                      |                                ↓
-                                               Google Gemini              Gmail + Google Sheets
-```
 
 ---
-
-## 📜 License
-
-MIT License — Free to use, modify, and distribute.
 
 ---
 
