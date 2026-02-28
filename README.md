@@ -6,12 +6,12 @@
 
 ## 👥 Team Members
 
-| Name | Role |
-|------|------|
-| Nitesh Ranjankar | Team Lead & Workflow Architect |
-| *(Member 2)* | AI Prompt Engineer |
-| *(Member 3)* | Frontend & Form Design |
-| *(Member 4)* | Integration & Testing |
+| Name | 
+|------|
+| Nitesh Ranjankar | 
+| *Ashish Deshmukh* | 
+| *Sarthak Bhalerao* |
+| *Alina Pathan* |
 
 > **Team Name:** TriggerX
 > **Hackathon:** Pandora Hackathon 2026
